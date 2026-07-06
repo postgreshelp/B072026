@@ -1,0 +1,109 @@
+Installation
+
+	source code	: install from source code 
+	yum/dnf	: dnf method of installation (internet connectivity) ** (99%)
+	rpm : offline installation (rpm -ivh) (1%)
+	
+source code:
+
+	1. Download the software
+	wget https://ftp.postgresql.org/pub/source/v17.10/postgresql-17.10.tar.gz
+
+	2. Extract it
+	tar -xf postgresql-17.10.tar.gz
+
+pre-requisites
+---------------
+
+
+1. make     | make --version 		   | > 3.8		 				 | dnf install make -y			#compile/run all at once
+2. gcc      | rpm -qa | grep gcc 	   | gcc-*						 | dnf install gcc -y			#tool for C programs
+3. readline | rpm -qa | grep readline  | readline, readline-devel    | dnf install readline* -y		#read previous commands
+4. zlib     | rpm -qa | grep zlib      | zlib, zlib-devel			 | dnf install zlib* -y			#enable compression
+5*. libicu	| rpm -qa | grep libicu    | libicu, libicu-devel        | dnf install libicu* -y		#sorting operations
+6*. flex	| rpm -qa | grep flex	   | flex						 | dnf install flex				#parsing
+7*. bison   | rpm -qa | grep bison     | bison                       | dnf install bison			#parsing
+ 
+dnf install make gcc readline-devel zlib-devel libicu-devel flex bison perl -y
+ 
+
+./configure								#check if pre-requisites met/not
+make									#compile C programs
+make install							#run your C programs
+
+useradd postgres						#add a user
+passwd postgres							#set password
+mkdir -p u01							#create parent directory / mount point
+chown postgres /u01						#make postgrs as owner
+
+su - postgres							#switch to postgres
+mkdir -p /u01/pgsql/17					#decide the location 
+
+/usr/local/pgsql/bin/initdb -D /u01/pgsql/17	#initilize new database cluster
+/usr/local/pgsql/bin/pg_ctl -D /u01/pgsql/17 	#start
+/usr/local/pgsql/bin/psql 						#login
+
+
+dnf/yum method:
+----------------
+
+dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+dnf install -y postgresql18-server
+
+su - postgres
+mkdir -p /u01/pgsql/18
+
+/usr/pgsql-18/bin/initdb -D /u01/pgsql/18
+/usr/pgsql-18/bin/pg_ctl  -D /u01/pgsql/18 start
+/usr/pgsql-18/bin/psql
+
+rpm method
+----------
+
+postgresql19-contrib-19-beta1_1PGDG.rhel9.8.x86_64.rpm
+2. postgresql19-19-beta1_1PGDG.rhel9.8.x86_64.rpm
+1. postgresql19-libs-19-beta1_1PGDG.rhel9.8.x86_64.rpm
+3. postgresql19-server-19-beta1_1PGDG.rhel9.8.x86_64.rpm
+
+wget https://download.postgresql.org/pub/repos/yum/testing/19/redhat/rhel-9-x86_64/postgresql19-contrib-19-beta1_1PGDG.rhel9.8.x86_64.rpm
+wget https://download.postgresql.org/pub/repos/yum/testing/19/redhat/rhel-9-x86_64/postgresql19-libs-19-beta1_1PGDG.rhel9.8.x86_64.rpm
+wget https://download.postgresql.org/pub/repos/yum/testing/19/redhat/rhel-9-x86_64/postgresql19-server-19-beta1_1PGDG.rhel9.8.x86_64.rpm
+wget https://download.postgresql.org/pub/repos/yum/testing/19/redhat/rhel-9-x86_64/postgresql19-19-beta1_1PGDG.rhel9.8.x86_64.rpm
+
+rpm -ivh <software_name>
+
+su - postgres
+mkdir -p /u01/pgsql/19
+
+/usr/pgsql-19/bin/initdb -D /u01/pgsql/19
+/usr/pgsql-19/bin/pg_ctl  -D /u01/pgsql/19 start
+/usr/pgsql-19/bin/psql
+
+Dependencies resolved.
+=======================================================================================================================================
+ Package                               Architecture             Version                                 Repository                Size
+=======================================================================================================================================
+Installing:
+ postgresql18-server                   x86_64                   18.4-2PGDG.rhel9.8                      pgdg18                   7.2 M
+Installing dependencies:
+ postgresql18                          x86_64                   18.4-2PGDG.rhel9.8                      pgdg18                   2.0 M
+ postgresql18-libs                     x86_64                   18.4-2PGDG.rhel9.8                      pgdg18                   301 k
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/usr/pgsql-18/bin/postgresql-18-setup initdb
+systemctl enable postgresql-18
+systemctl start postgresql-18
