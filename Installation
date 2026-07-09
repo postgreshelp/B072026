@@ -1,20 +1,19 @@
+
 Installation
+-------------
 
-	source code	: install from source code 
-	yum/dnf	: dnf method of installation (internet connectivity) ** (99%)
-	rpm : offline installation (rpm -ivh) (1%)
-	
-source code:
+Install the software (at /usr/local/pgsql/bin or /usr/pgsql-17/bin) to CREATE your database (/u01/pgsql/17)
 
-	1. Download the software
-	wget https://ftp.postgresql.org/pub/source/v17.10/postgresql-17.10.tar.gz
+1. Source code (0.000001)
 
-	2. Extract it
-	tar -xf postgresql-17.10.tar.gz
+1. Downlaod postgres from internet
+wget https://ftp.postgresql.org/pub/source/v17.2/postgresql-17.2.tar.gz
 
-pre-requisites
+2. Extract it
+tar -xf postgresql-17.2.tar.gz
+
+Pre-requisites
 ---------------
-
 
 1. make     | make --version 		   | > 3.8		 				 | dnf install make -y			#compile/run all at once
 2. gcc      | rpm -qa | grep gcc 	   | gcc-*						 | dnf install gcc -y			#tool for C programs
@@ -26,26 +25,249 @@ pre-requisites
  
 dnf install make gcc readline-devel zlib-devel libicu-devel flex bison perl -y
  
+3. cd postgresql-17.2
 
-./configure								#check if pre-requisites met/not
-make									#compile C programs
-make install							#run your C programs
+   ./configure			#check if all pre-requisites are met
+    make 				#compile all your C programs
+    make install		#run your C programs
+	
+	useradd postgres
+	passwd postgres
+	mkdir -p /u01
+	chown -R postgres:postgres /u01
+	
+    su - postgres
+	mkdir -p /u01/pgsql/16
+	
+    /usr/local/pgsql/bin/initdb -D /u01/pgsql/16			#initialize new database
+    /usr/local/pgsql/bin/pg_ctl -D /u01/pgsql/16 start		#start it
+    /usr/local/pgsql/bin/psql 								#login
 
-useradd postgres						#add a user
-passwd postgres							#set password
-mkdir -p u01							#create parent directory / mount point
-chown postgres /u01						#make postgrs as owner
+probable error messages
+-----------------------
 
-su - postgres							#switch to postgres
-mkdir -p /u01/pgsql/17					#decide the location 
-
-/usr/local/pgsql/bin/initdb -D /u01/pgsql/17	#initilize new database cluster
-/usr/local/pgsql/bin/pg_ctl -D /u01/pgsql/17 	#start
-/usr/local/pgsql/bin/psql 						#login
+configure: error: no acceptable C compiler found in $PATH
+configure: error: readline library not found
+configure: error: zlib library not found
+configure: error: ICU library not found
 
 
-dnf/yum method:
-----------------
+2. YUM (99%)
+
+useradd postgres
+passwd postgres
+
+dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+dnf -qy module disable postgresql
+dnf install -y postgresql15-server   #download the software and install it 
+	
+mkdir -p /u01
+chown -R postgres:postgres /u01
+
+su - postgres
+mkdir -p /u01/pgsql/15
+
+/usr/pgsql-15/bin/initdb -D /u01/pgsql/15
+/usr/pgsql-15/bin/pg_ctl -D /u01/pgsql/15 start
+/usr/pgsql-15/bin/psql
+
+3. RPM method
+
+wget https://download.postgresql.org/pub/repos/yum/14/redhat/rhel-9-x86_64/postgresql14-libs-14.13-1PGDG.rhel9.x86_64.rpm
+wget https://download.postgresql.org/pub/repos/yum/14/redhat/rhel-9-x86_64/postgresql14-14.13-2PGDG.rhel9.x86_64.rpm
+wget https://download.postgresql.org/pub/repos/yum/14/redhat/rhel-9-x86_64/postgresql14-server-14.13-2PGDG.rhel9.x86_64.rpm
+wget https://download.postgresql.org/pub/repos/yum/14/redhat/rhel-9-x86_64/postgresql14-contrib-14.13-2PGDG.rhel9.x86_64.rpm
+
+3. postgresql14-server-14.13-1PGDG.rhel9.x86_64.rpm
+1. postgresql14-libs-14.13-1PGDG.rhel9.x86_64.rpm
+2. postgresql14-14.13-1PGDG.rhel9.x86_64.rpm
+4. postgresql14-contrib-14.13-1PGDG.rhel9.x86_64.rpm
+
+rpm -ivh postgresql14-libs-14.13-1PGDG.rhel9.x86_64.rpm
+rpm -ivh postgresql14-14.13-1PGDG.rhel9.x86_64.rpm
+rpm -ivh postgresql14-server-14.13-1PGDG.rhel9.x86_64.rpm
+
+su - postgres
+mkdir -p /u01/pgsql/14
+
+/usr/pgsql-14/bin/initdb -D /u01/pgsql/14
+/usr/pgsql-14/bin/pg_ctl -D /u01/pgsql/14 start
+/usr/pgsql-14/bin/psql
+
+Extensions
+----------
+
+## Install contrib module
+
+postgres=# create extension pg_buffercache;
+2024-08-27 03:15:01.002 GMT [8419] ERROR:  extension "pg_buffercache" is not available
+2024-08-27 03:15:01.002 GMT [8419] DETAIL:  Could not open extension control file "/usr/local/pgsql/share/extension/pg_buffercache.control": No such file or directory.
+
+##Source code method
+
+cd /root/postgresql-17.2/contrib
+make 
+make install
+
+##dnf install postgresql15-contrib
+
+postgres=# create extension pg_buffercache;
+CREATE EXTENSION
+postgres=#
+
+##rpm
+
+rpm -ivh postgresql14-contrib-14.13-1PGDG.rhel9.x86_64.rpm
+
+postgres=# create extension pg_buffercache;
+CREATE EXTENSION
+postgres=#
+
+### Install extension that are not part of contrib
+
+- but are associated with postgresql.org
+
+dnf install pg_repack_15
+
+postgres=# create extension pg_repack;
+CREATE EXTENSION
+postgres=#
+
+- not registered
+-> most probably not required.
+
+Running multiple servers
+-------------------------
+
+open postgresql.conf -> change port  
+#port=5433
+
+## client vs server
+
+#lower version of client to connect to higher version of server
+
+[postgres@lab01 14]$ /usr/pgsql-14/bin/psql -p 5433
+psql (14.13, server 15.8)
+WARNING: psql major version 14, server major version 15.
+         Some psql features might not work.
+Type "help" for help.
+
+postgres=#
+
+[postgres@lab01 14]$ /usr/pgsql-15/bin/psql -p 5436
+psql (15.8, server 14.13)
+Type "help" for help.
+
+postgres=#
+
+[postgres@lab01 14]$ /usr/pgsql-15/bin/psql -p 5433
+psql (15.8)
+Type "help" for help.
+
+postgres=# \q
+[postgres@lab01 14]$ /usr/pgsql-14/bin/psql -p 5436
+psql (14.13)
+Type "help" for help.
+
+postgres=#
+
+# start v14 server with v15 pg_ctl
+
+[postgres@lab01 ~]$ /usr/pgsql-15/bin/pg_ctl start -D /u01/pgsql/14
+waiting for server to start....2024-08-27 09:27:43.729 IST [11438] FATAL:  database files are incompatible with server
+2024-08-27 09:27:43.729 IST [11438] DETAIL:  The data directory was initialized by PostgreSQL version 14, which is not compatible with this version 15.8.
+ stopped waiting
+pg_ctl: could not start server
+Examine the log output.
+[postgres@lab01 ~]$
+
+
+Uninstallation
+---------------
+
+source code
+
+cd /root/postgresql-17.2/contrib
+make clean
+cd ../
+make clean
+
+rpm/yum
+
+dnf remove postgresql15* (or)
+dnf remove postgresql*
+
+## remove postgres repository as well
+
+dnf remove pgdg*
+
+[root@lab01 pgsql]# dnf install postgresql15-server
+Last metadata expiration check: 1:08:30 ago on Tuesday 27 August 2024 08:23:59 AM.
+No match for argument: postgresql15-server
+Error: Unable to find a match: postgresql15-server
+
+Installing root approach
+-------------------------
+
+dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+dnf -qy module disable postgresql
+dnf install -y postgresql17-server
+
+/usr/pgsql-17/bin/postgresql-17-setup initdb
+systemctl enable postgresql-17
+systemctl start postgresql-17
+
+[or]
+	
+mkdir -p /u01
+chown -R postgres:postgres /u01
+
+su - postgres
+mkdir -p /u01/pgsql/15
+
+/usr/pgsql-17/bin/initdb -D /u01/pgsql/17
+/usr/pgsql-17/bin/pg_ctl -D /u01/pgsql/17 start
+/usr/pgsql-17/bin/psql
+
+I want to have my own data directory for root approach
+--------------------------------------------------------
+
+vi /lib/systemd/system/postgresql-17.service
+PGDATA=/u01/pgsql/17
+:wq (save and exit)
+
+systemctl daemon-reload
+
+/usr/pgsql-17/bin/postgresql-17-setup initdb
+systemctl enable postgresql-17
+systemctl start postgresql-17
+
+Multiple instances with root approach
+-------------------------------------
+
+cp postgresql-17.service postgresql-17-secondary.service
+
+vi postgresql-17-secondary.service
+PGDATA=/u01/pgsql/17_2
+
+systemctl daemon-reload
+
+/usr/pgsql-17/bin/postgresql-17-setup initdb postgresql-17-secondary
+
+cd /u01/pgsql/17_2
+port=5433
+
+systemctl start postgresql-17-secondary
+
+Install postgresql17-devel
+
+dnf install epel-release
+dnf config-manager --set-enabled crb
+dnf install postgresql17-devel
+
+
+Root approach
+-------------
 
 dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 dnf install -y postgresql18-server
@@ -54,56 +276,53 @@ su - postgres
 mkdir -p /u01/pgsql/18
 
 /usr/pgsql-18/bin/initdb -D /u01/pgsql/18
-/usr/pgsql-18/bin/pg_ctl  -D /u01/pgsql/18 start
+/usr/pgsql-18/bin/pg_ctl -D /u01/pgsql/18 start
 /usr/pgsql-18/bin/psql
 
-rpm method
-----------
+[or]
 
-postgresql19-contrib-19-beta1_1PGDG.rhel9.8.x86_64.rpm
-2. postgresql19-19-beta1_1PGDG.rhel9.8.x86_64.rpm
-1. postgresql19-libs-19-beta1_1PGDG.rhel9.8.x86_64.rpm
-3. postgresql19-server-19-beta1_1PGDG.rhel9.8.x86_64.rpm
-
-wget https://download.postgresql.org/pub/repos/yum/testing/19/redhat/rhel-9-x86_64/postgresql19-contrib-19-beta1_1PGDG.rhel9.8.x86_64.rpm
-wget https://download.postgresql.org/pub/repos/yum/testing/19/redhat/rhel-9-x86_64/postgresql19-libs-19-beta1_1PGDG.rhel9.8.x86_64.rpm
-wget https://download.postgresql.org/pub/repos/yum/testing/19/redhat/rhel-9-x86_64/postgresql19-server-19-beta1_1PGDG.rhel9.8.x86_64.rpm
-wget https://download.postgresql.org/pub/repos/yum/testing/19/redhat/rhel-9-x86_64/postgresql19-19-beta1_1PGDG.rhel9.8.x86_64.rpm
-
-rpm -ivh <software_name>
-
-su - postgres
-mkdir -p /u01/pgsql/19
-
-/usr/pgsql-19/bin/initdb -D /u01/pgsql/19
-/usr/pgsql-19/bin/pg_ctl  -D /u01/pgsql/19 start
-/usr/pgsql-19/bin/psql
-
-Dependencies resolved.
-=======================================================================================================================================
- Package                               Architecture             Version                                 Repository                Size
-=======================================================================================================================================
-Installing:
- postgresql18-server                   x86_64                   18.4-2PGDG.rhel9.8                      pgdg18                   7.2 M
-Installing dependencies:
- postgresql18                          x86_64                   18.4-2PGDG.rhel9.8                      pgdg18                   2.0 M
- postgresql18-libs                     x86_64                   18.4-2PGDG.rhel9.8                      pgdg18                   301 k
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#### change data directory location
 /usr/pgsql-18/bin/postgresql-18-setup initdb
 systemctl enable postgresql-18
 systemctl start postgresql-18
+
+cd /lib/systemd/system
+vi postgresql-18.service
+Environment=PGDATA=/u01/pgsql/data/
+
+systemctl daemon-reload
+
+multiple clusters in same machine
+---------------------------------
+[root@lab01 system]# pwd
+/lib/systemd/system
+
+cp postgresql-18.service postgresql-18-secondary.service
+
+edit postgresql-18-secondary.service to change Environment=PGDATA=/u01/pgsql/data/
+
+systemctl daemon-reload
+
+[root@lab01 bin]# ./postgresql-18-setup initdb postgresql-18-secondary
+Initializing database ... OK
+
+-- change the port number in new data directory.
+
+systemctl start postgresql-18-secondary
+
+
+ubuntu comparision
+------------------
+
+dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+dnf install -y postgresql18-server
+/usr/pgsql-18/bin/postgresql-18-setup initdb
+systemctl enable postgresql-18
+systemctl start postgresql-18
+
+
+apt install -y postgresql-common							####EXTRA STEP that gets me cluster control tools
+/usr/share/postgresql-common/pgdg/apt.postgresql.org.sh		####Get the repo
+apt install postgresql-18									####Initialize+start
+
+
